@@ -1,0 +1,5 @@
+quote pasv
+binary
+put openmiio_agent /data/openmiio_agent
+disconnect
+quit
