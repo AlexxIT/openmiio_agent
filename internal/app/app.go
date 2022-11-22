@@ -58,9 +58,10 @@ func Enabled(name string) bool {
 }
 
 const (
-	ModelMGW  = "lumi.gateway.mgl03"
-	ModelE1   = "lumi.gateway.aqcn02"
-	ModelMGW2 = "lumi.gateway.mcn001"
+	ModelMGW   = "lumi.gateway.mgl03"
+	ModelE1    = "lumi.gateway.aqcn02"
+	ModelMGW2  = "lumi.gateway.mcn001"
+	ModelM1S22 = "lumi.gateway.acn004"
 )
 
 var Firmware string

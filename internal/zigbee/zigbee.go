@@ -38,6 +38,9 @@ func Init() {
 	case app.ModelE1, app.ModelMGW2:
 		preventRestart("mZ3GatewayHost_MQTT")
 		_ = exec.Command("killall", "mZ3GatewayHost_MQTT").Run()
+	case app.ModelM1S22:
+		log.Warn().Msgf("[zigb] M1S 2022 unsupported")
+		return
 	default:
 		return
 	}

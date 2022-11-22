@@ -55,7 +55,7 @@ func runPublic() {
 	case app.ModelMGW:
 		// fix CPU 90% full time bug
 		cmd = "killall mosquitto; sleep .5; mosquitto -d; sleep .5; killall zigbee_gw"
-	case app.ModelE1, app.ModelMGW2:
+	case app.ModelE1, app.ModelMGW2, app.ModelM1S22:
 		cmd = "killall mosquitto; cp /bin/mosquitto /tmp; sed 's=127.0.0.1=0000.0.0.0=;s=^lo$= =' -i /tmp/mosquitto; /tmp/mosquitto -d"
 	default:
 		return
