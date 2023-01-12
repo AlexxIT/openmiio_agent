@@ -14,15 +14,15 @@ almost all default functionality of the device in the Xiaomi Mi Home ecosystem.
 - Fix difference for BLE specs
 - Zigbee custom firmware support
 
-Supported gateway  | Xiaomi Multimode Gateway     | Xiaomi Multimode Gateway 2 | Aqara Hub E1
--------------------|------------------------------|----------------------------|-------------
-Supported models   | `ZNDMWG03LM`<br>`ZNDMWG02LM` | `DMWG03LM`                 | `ZHWG16LM`
-Mi Home Zigbee     | yes                          | yes                        | yes
-Mi Home BLE+Mesh   | yes                          | yes                        | no
-HomeKit for Zigbee | yes                          | no                         | yes
-Beeper and Alarm   | yes                          | no                         | no
-Buggy hardware     | yes                          | no                         | no
-Zigbee range       | high                         | unknown                    | medium
+| Supported gateway  | Xiaomi Multimode Gateway     | Xiaomi Multimode Gateway 2 | Aqara Hub E1 |
+|--------------------|------------------------------|----------------------------|--------------|
+| Supported models   | `ZNDMWG03LM`<br>`ZNDMWG02LM` | `DMWG03LM`                 | `ZHWG16LM`   |
+| Mi Home Zigbee     | yes                          | yes                        | yes          |
+| Mi Home BLE+Mesh   | yes                          | yes                        | no           |
+| HomeKit for Zigbee | yes                          | no                         | yes          | 
+| Beeper and Alarm   | yes                          | no                         | no           |
+| Buggy hardware     | yes                          | no                         | no           |
+| Zigbee range       | high                         | unknown                    | medium       |
 
 **Comments**
 
@@ -84,12 +84,12 @@ By default, the standard gateway software will work with the zigbee chip. At the
 
 **All of your thanks for supporting the EZSP in zigbee2mqtt can say to [@kirovilya](https://github.com/kirovilya).**
 
-Feature | ZHA | zigbee2mqtt
---------|-----|------------
-Support EFR32 EZSP (gateway's chip) | excellent | [experimental](https://www.zigbee2mqtt.io/guide/adapters/#experimental)
-Support EZSPv7 (original chip firmware) | excellent | [experimental](https://github.com/Koenkk/zigbee-herdsman/pull/598)
-Support EZSPv8 (custom chip firmware) | excellent | [experimental](https://github.com/Koenkk/zigbee-herdsman/issues/319)
-Keep MiHome network settings | yes | no
+| Feature                                 | ZHA       | zigbee2mqtt                                                             |
+|-----------------------------------------|-----------|-------------------------------------------------------------------------|
+| Support EFR32 EZSP (gateway's chip)     | excellent | [experimental](https://www.zigbee2mqtt.io/guide/adapters/#experimental) |
+| Support EZSPv7 (original chip firmware) | excellent | [experimental](https://github.com/Koenkk/zigbee-herdsman/pull/598)      |
+| Support EZSPv8 (custom chip firmware)   | excellent | [experimental](https://github.com/Koenkk/zigbee-herdsman/issues/319)    |
+| Keep MiHome network settings            | yes       | no                                                                      |
 
 When using ZHA, you can switch from MiHome mode to ZHA mode at any time. You won't need to repair your devices. But may need additional reconfiguration.
 
@@ -173,15 +173,15 @@ end
 
 ## MQTT
 
-Topic | App | Mode | Description
-------|-----|------|------------
-`gw/IEEE/commands`        | Z3GatewayHost  | subscribe | commands to zigbee stack (Silabs format)
-`gw/IEEE/executed`        | Z3GatewayHost  | publish   | executed commands
-`gw/IEEE/heartbeat`       | Z3GatewayHost  | publish   | zigbee network alive messages (1 min)
-`gw/IEEE/MessageReceived` | Z3GatewayHost  | publish   | raw messages from zigbee stack
-`miio/command`            | openmiio_agent | subscribe | commands to gateway (miIO format)
-`miio/command_ack`        | openmiio_agent | publish   | response on commands
-`miio/report`             | openmiio_agent | publish   | updates from gateway to cloud
-`miio/report_ack`         | openmiio_agent | publish   | response from cloud to gateway
-`zigbee/recv`             | zigbee_agent   | subscribe | commands to zigbee stack (Lumi format)
-`zigbee/send`             | zigbee_agent   | publish   | response from zigbee stack 
+| Topic                     | App            | Mode      | Description                              |
+|---------------------------|----------------|-----------|------------------------------------------|
+| `gw/IEEE/commands`        | Z3GatewayHost  | subscribe | commands to zigbee stack (Silabs format) |
+| `gw/IEEE/executed`        | Z3GatewayHost  | publish   | executed commands                        |
+| `gw/IEEE/heartbeat`       | Z3GatewayHost  | publish   | zigbee network alive messages (1 min)    |
+| `gw/IEEE/MessageReceived` | Z3GatewayHost  | publish   | raw messages from zigbee stack           |
+| `miio/command`            | openmiio_agent | subscribe | commands to gateway (miIO format)        |
+| `miio/command_ack`        | openmiio_agent | publish   | response on commands                     |
+| `miio/report`             | openmiio_agent | publish   | updates from gateway to cloud            |
+| `miio/report_ack`         | openmiio_agent | publish   | response from cloud to gateway           |
+| `zigbee/recv`             | zigbee_agent   | subscribe | commands to zigbee stack (Lumi format)   |
+| `zigbee/send`             | zigbee_agent   | publish   | response from zigbee stack               | 
