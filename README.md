@@ -164,7 +164,7 @@ function miio_response(to, method, req, res)
     if to == 4 then
         if method == "_sync.zigbee3_bind" then
             req = json.decode(req)
-            res = { id = req.id, result = { "ok" } }
+            res = { id = req.id, result = { code = 0, message = "ok" } }
             return json.encode(res)
         end
     end
