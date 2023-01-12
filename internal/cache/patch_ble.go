@@ -59,6 +59,13 @@ func patchBLEProd(res rpc.Message) bool {
 		case lock, opening:
 			rule.Delta = 0
 			rule.Intvl = 420
+		case 4112: // Xiaomi Kettles has wrong spec, tested only on 131
+			switch res1.Pdid {
+			case 131, 275, 1116:
+				rule.Eid = 4101
+				rule.Delta = 0
+				rule.Intvl = 0
+			}
 		}
 	}
 
