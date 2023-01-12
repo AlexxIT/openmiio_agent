@@ -4,8 +4,11 @@ import (
 	"bytes"
 	"github.com/rs/zerolog"
 	"os"
+	"runtime"
 	"strings"
 )
+
+var Version = "1.0.0"
 
 func Init() {
 	// init command arguments
@@ -40,6 +43,7 @@ func Init() {
 		}
 	}
 
+	log.Info().Msgf("openmiio_agent version %s %s/%s", Version, runtime.GOOS, runtime.GOARCH)
 	log.Info().Msgf("init model=%s fw=%s", Model, Firmware)
 }
 
