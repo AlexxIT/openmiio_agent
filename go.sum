@@ -7,8 +7,6 @@ github.com/huin/gobinarytest v0.0.0-20170803182140-bc6c19e91749 h1:uEtvxEWZtnFRu
 github.com/huin/gobinarytest v0.0.0-20170803182140-bc6c19e91749/go.mod h1:NLS5Is63wKCuzcJLN28yt3sm/Ps9OXNd9GPUlO4wfFA=
 github.com/huin/mqtt v0.0.0-20220729180547-9e81042af5f7 h1:FbE0sTosmODWNX7oRNCd+xNK8HI1Ys2Je+612xmad38=
 github.com/huin/mqtt v0.0.0-20220729180547-9e81042af5f7/go.mod h1:zbO4h3NDGxpAVWGYzQNle+BDfuwm8fWcgVxFuIHyuas=
-github.com/jeffallen/mqtt v0.0.0-20180518073322-5387cfa89df0 h1:ESdZtIOKF9F7Ah9lbdKyc0xiioZvnGe3XrvXzgEka0Y=
-github.com/jeffallen/mqtt v0.0.0-20180518073322-5387cfa89df0/go.mod h1:5VmMaANxUXHvNfKSdcjuEYlAFnxsu6vVAr6kgQOoUG4=
 github.com/layeh/gopher-json v0.0.0-20201124131017-552bb3c4c3bf h1:bg6J/5S/AeTz7K9i/luJRj31BJ8f+LgYwKQBSOZxSEM=
 github.com/layeh/gopher-json v0.0.0-20201124131017-552bb3c4c3bf/go.mod h1:E/q28EyUVBgBQnONAVPIdwvEsv4Ve0vaCA9JWim4+3I=
 github.com/mattn/go-colorable v0.1.12 h1:jF+Du6AlPIjs2BiUiQlKOX0rt3SujHxPnksPKZbaA40=

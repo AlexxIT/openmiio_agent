@@ -1,12 +1,15 @@
 package mqtt
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
 	"github.com/AlexxIT/openmiio_agent/internal/app"
+	"github.com/AlexxIT/openmiio_agent/pkg/mqtt"
 	proto "github.com/huin/mqtt"
-	"github.com/jeffallen/mqtt"
 	"github.com/rs/zerolog"
 	"net"
+	"os"
 	"os/exec"
 	"time"
 )
@@ -56,7 +59,11 @@ func runPublic() {
 		// fix CPU 90% full time bug
 		cmd = "killall mosquitto; sleep .5; mosquitto -d; sleep .5; killall zigbee_gw"
 	case app.ModelE1, app.ModelMGW2, app.ModelM1S22:
-		cmd = "killall mosquitto; cp /bin/mosquitto /tmp; sed 's=127.0.0.1=0000.0.0.0=;s=^lo$= =' -i /tmp/mosquitto; /tmp/mosquitto -d"
+		if err := fixMosquitto(); err != nil {
+			log.Warn().Err(err).Caller().Send()
+			return
+		}
+		cmd = "killall mosquitto; sleep .5; /tmp/mosquitto -d; sleep .5"
 	default:
 		return
 	}
@@ -68,6 +75,27 @@ func runPublic() {
 	}
 }
 
+func fixMosquitto() error {
+	data, err := os.ReadFile("/bin/mosquitto")
+	if err != nil {
+		return err
+	}
+
+	i := bytes.Index(data, []byte{'1', '2', '7', '.', '0', '.', '0', '.', '1', 0, 0, 0, 'l', 'o'})
+	if i < 0 {
+		return errors.New("unsupported mosquitto binary version")
+	}
+
+	copy(data[i:], []byte{'0', '.', '0', '.', '0', '.', '0', 0, 0, 0, 0, 0, 0, 0})
+
+	// mosquitto 2.0.15
+	if len(data) == 231900 {
+		data[0x1853E] = 0
+	}
+
+	return os.WriteFile("/tmp/mosquitto", data, 0755)
+}
+
 func worker() {
 	c, err := net.Dial("tcp", "127.0.0.1:1883")
 	if err != nil {
@@ -75,8 +103,12 @@ func worker() {
 		return
 	}
 
+	msg := &proto.Connect{
+		ClientId:       "openmiio_agent",
+		KeepAliveTimer: 60 * 60 * 18, // important for mosquitto v2
+	}
 	conn = mqtt.NewClientConn(c)
-	if err = conn.Connect("", ""); err != nil {
+	if err = conn.Connect(msg); err != nil {
 		log.Warn().Err(err).Caller().Send()
 		return
 	}
