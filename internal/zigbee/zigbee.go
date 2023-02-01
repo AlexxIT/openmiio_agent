@@ -3,7 +3,6 @@ package zigbee
 import (
 	"bufio"
 	"bytes"
-	"errors"
 	"github.com/AlexxIT/openmiio_agent/internal/app"
 	"github.com/AlexxIT/openmiio_agent/internal/mqtt"
 	"github.com/AlexxIT/openmiio_agent/pkg/serial"
@@ -190,7 +189,9 @@ func open(port string, hardware bool) (io.ReadWriteCloser, error) {
 		} else if probe(port, 38400, hardware) {
 			baudRate = 38400
 		} else {
-			return nil, errors.New("unknown baud rate")
+			baudRate = 115200
+			log.Warn().Msg("[zigb] fallback to default baud rate")
+			//return nil, errors.New("unknown baud rate")
 		}
 	}
 
@@ -226,16 +227,14 @@ func probe(port string, baudRate uint, hardware bool) bool {
 
 	// collect 7 byte of answer
 	b := make([]byte, 7)
-	_, _ = conn.Read(b)
-
-	// fix custom firmware first single byte
-	if b[0] == 0x11 {
-		_, _ = conn.Read(b)
-	}
+	_, _ = io.ReadFull(conn, b)
+	log.Trace().Msgf("[zigb] probe %x", b)
 
 	_ = conn.Close()
 
-	return bytes.Compare(b, []byte{0x1A, 0xC1, 0x02, 0x0B, 0x0A, 0x52, 0x7E}) == 0
+	// right answer:  1a c1 02 0b 0a 52 7e
+	// but sometimes: 11 1a c1 02 0b 0a 52 7e
+	return bytes.Contains(b, []byte{0x1A, 0xC1, 0x02, 0x0B, 0x0A, 0x52})
 }
 
 // Hacky way of preventing program restarts:
