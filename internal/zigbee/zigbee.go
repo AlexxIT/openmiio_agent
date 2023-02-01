@@ -78,37 +78,37 @@ var z3app *exec.Cmd
 var baudRate uint
 
 func z3Worker(name string, arg ...string) {
-	log.Debug().Msgf("[zigb] run %s", name)
-
-	z3app = exec.Command(name, arg...)
-
-	pipe, err := z3app.StdoutPipe()
-	if err != nil {
-		log.Panic().Err(err).Caller().Send()
-	}
-
-	if err = z3app.Start(); err != nil {
-		log.Panic().Err(err).Caller().Send()
-	}
-
-	r := bufio.NewReader(pipe)
 	for {
-		var line []byte
-		line, _, err = r.ReadLine()
+		log.Debug().Msgf("[zigb] run %s", name)
+
+		z3app = exec.Command(name, arg...)
+
+		pipe, err := z3app.StdoutPipe()
 		if err != nil {
-			break
+			log.Panic().Err(err).Caller().Send()
 		}
 
-		log.Trace().Msgf("[zigb] %s", line)
+		if err = z3app.Start(); err != nil {
+			log.Panic().Err(err).Caller().Send()
+		}
 
-		mqtt.Publish("log/z3", line, false)
+		r := bufio.NewReader(pipe)
+		for {
+			var line []byte
+			line, _, err = r.ReadLine()
+			if err != nil {
+				break
+			}
+
+			log.Trace().Msgf("[zigb] %s", line)
+
+			mqtt.Publish("log/z3", line, false)
+		}
+
+		if z3app == nil {
+			break
+		}
 	}
-
-	if err = z3app.Process.Release(); err != nil {
-		log.Warn().Err(err).Caller().Send()
-	}
-
-	z3app = nil
 
 	log.Debug().Msgf("[zigb] close %s", name)
 }
@@ -131,7 +131,10 @@ func tcpWorker(addr, port string, hardware bool) {
 		log.Debug().Stringer("addr", tcp.RemoteAddr()).Msg("[zigb] new connection")
 
 		if z3app != nil {
-			_ = z3app.Process.Kill()
+			proc := z3app.Process
+			z3app = nil
+			_ = proc.Kill()
+			_ = proc.Release()
 		}
 
 		ser, err = open(port, hardware)
