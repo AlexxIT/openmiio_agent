@@ -1,6 +1,6 @@
 module github.com/AlexxIT/openmiio_agent
 
-go 1.17
+go 1.20
 
 require (
 	github.com/huin/mqtt v0.0.0-20220729180547-9e81042af5f7
