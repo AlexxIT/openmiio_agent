@@ -16,7 +16,7 @@ almost all default functionality of the device in the Xiaomi Mi Home ecosystem.
 
 | Supported gateway  | Xiaomi Multimode Gateway     | Xiaomi Multimode Gateway 2 | Aqara Hub E1 |
 |--------------------|------------------------------|----------------------------|--------------|
-| Supported models   | `ZNDMWG03LM`<br>`ZNDMWG02LM` | `DMWG03LM`                 | `ZHWG16LM`   |
+| Supported models   | `ZNDMWG03LM`<br>`ZNDMWG02LM` | `DMWG03LM`<br>`ZNDMWG04LM` | `ZHWG16LM`   |
 | Mi Home Zigbee     | yes                          | yes                        | yes          |
 | Mi Home BLE+Mesh   | yes                          | yes                        | no           |
 | HomeKit for Zigbee | yes                          | no                         | yes          | 
@@ -44,18 +44,19 @@ integration [Xiaomi Gateway 3](https://github.com/AlexxIT/XiaomiGateway3). Integ
 - download and run latest `openmiio_agent` binary
 - run the binary after gateway restarts
 
-But you can download binary manually from:
+But you can download binary manually from [latest release](https://github.com/AlexxIT/openmiio_agent/releases/latest).
 
-- Xiaomi Multimode Gateway [MIPS](https://sourceforge.net/projects/mgl03/files/openmiio_agent/)
-- Xiaomi Multimode Gateway 2 and Aqara Hub E1 [ARM](https://sourceforge.net/projects/aqcn02/files/openmiio_agent/)
+- **MIPS** for Xiaomi Multimode Gateway
+- **ARM** for Xiaomi Multimode Gateway 2 and Aqara Hub E1
 
 ## Run
 
 All agruments are optional:
 
-`/data/openmiio_agent miio mqtt cache z3 --zigbee.tcp=8888 --log.level=trace`
+`/data/openmiio_agent miio central mqtt cache z3 --zigbee.tcp=8888 --log.level=trace`
 
 - `miio` - enable miIO module for control all internal gateway communications instead of `miio_agent`
+- `central` - enable central module for catch BLE/Mesh local updates
 - `mqtt` - enable MQTT module and run gateways MQTT on public `1883` port
 - `cache` - enable cache module for process BLE sensors without Integrnet
 - `z3` - enable publish Z3GatewayHost stdout to MQTT (for reading zigbee stats)
