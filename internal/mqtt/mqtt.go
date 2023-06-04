@@ -54,18 +54,15 @@ func runPublic() {
 
 	var cmd string
 
-	switch app.Model {
-	case app.ModelMGW:
+	if app.Model == app.ModelMGW && app.Firmware < "1.5.5" {
 		// fix CPU 90% full time bug
 		cmd = "killall mosquitto; sleep .5; mosquitto -d; sleep .5; killall zigbee_gw"
-	case app.ModelE1, app.ModelMGW2, app.ModelM1S22:
+	} else {
 		if err := fixMosquitto(); err != nil {
 			log.Warn().Err(err).Caller().Send()
 			return
 		}
 		cmd = "killall mosquitto; sleep .5; /tmp/mosquitto -d; sleep .5"
-	default:
-		return
 	}
 
 	log.Info().Msg("[mqtt] run mosquitto on :1883")
@@ -81,6 +78,9 @@ func fixMosquitto() error {
 		return err
 	}
 
+	// 1. Fix for mosquitto v1 and v2, both MIPS and ARM
+	//    Multimode Gateway fw < 1.5.5 uses mosquitto v1
+	//    Multimode Gateway 2 fw < 1.0.6 uses mosquitto v1
 	i := bytes.Index(data, []byte{'1', '2', '7', '.', '0', '.', '0', '.', '1', 0, 0, 0, 'l', 'o'})
 	if i < 0 {
 		return errors.New("unsupported mosquitto binary version")
@@ -88,8 +88,13 @@ func fixMosquitto() error {
 
 	copy(data[i:], []byte{'0', '.', '0', '.', '0', '.', '0', 0, 0, 0, 0, 0, 0, 0})
 
-	// mosquitto 2.0.15
-	if len(data) == 231900 {
+	// 2. Fix for mosquitto v2
+	//    log("Warning: Interface %s does not support %s configuration.")
+	//    return 6; => return 0;
+	switch len(data) {
+	case 387799: // mosquitto 2.0.15 for Multimode Gateway fw 1.5.5+
+		data[0x26DD0] = 0
+	case 231900: // mosquitto 2.0.15 for Multimode Gateway 2 fw 1.0.6+
 		data[0x1853E] = 0
 	}
 
