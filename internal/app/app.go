@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-var Version = "1.1.0"
+var Version = "1.1.1"
 
 func Init() {
 	// init command arguments
