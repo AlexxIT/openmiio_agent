@@ -54,7 +54,7 @@ var log zerolog.Logger
 func miioRequestRaw(from int, b []byte) {
 	msg, err := rpc.NewMessage(b)
 	if err != nil {
-		log.Panic().Err(err).Caller().Msg(string(b))
+		log.Warn().Err(err).Caller().Msg(string(b))
 		return
 	}
 
