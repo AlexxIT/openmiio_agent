@@ -51,12 +51,12 @@ func Init() {
 	for {
 		conn1, err := sock.Accept()
 		if err != nil {
-			panic(err)
+			log.Panic().Err(err).Caller().Send()
 		}
 
 		conn2, err := net.Dial("unixpacket", ProxySocket)
 		if err != nil {
-			panic(err)
+			log.Panic().Err(err).Caller().Send()
 		}
 
 		log.Debug().Msgf("[cent] new connection")
