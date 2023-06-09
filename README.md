@@ -184,5 +184,42 @@ end
 | `miio/command_ack`        | openmiio_agent | publish   | response on commands                     |
 | `miio/report`             | openmiio_agent | publish   | updates from gateway to cloud            |
 | `miio/report_ack`         | openmiio_agent | publish   | response from cloud to gateway           |
+| `central/report`          | openmiio_agent | publish   | updates from bluetooth to central app    |
+| `openmiio/report`         | openmiio_agent | publish   | openmiio_agent alive messages (30 sec)   |
+| `broker/ping`             | zigbee_agent   | publish   | zigbee_agent alive message               |
 | `zigbee/recv`             | zigbee_agent   | subscribe | commands to zigbee stack (Lumi format)   |
 | `zigbee/send`             | zigbee_agent   | publish   | response from zigbee stack               | 
+
+**openmiio/report**
+
+```json5
+{
+  "gateway": {
+    "model": "lumi.gateway.mgl03",
+    "firmware": "1.5.4_0090",
+  },
+//  "miio": {
+//    "cloud_starts": 123,
+//    "cloud_uptime": "10s"
+//  },
+  "openmiio": {
+    "version": "1.1.1",
+    "uptime": "10s"
+  },
+  "serial": {
+    "bluetooth_rx": 12345,
+    "bluetooth_tx": 12345,
+    "bluetooth_oe": 123,
+    "zigbee_rx": 12345,
+    "zigbee_tx": 12345,
+    "zigbee_oe": 123
+  },
+  "zigbee": {
+    "tcp_remote": "192.168.1.123",
+    "tcp_starts": 123,
+    "tcp_uptime": "10s",
+    "z3_starts": 123,
+    "z3_uptime": "10s"
+  }
+}
+```

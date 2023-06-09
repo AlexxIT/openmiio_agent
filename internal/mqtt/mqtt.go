@@ -34,6 +34,12 @@ func Init() {
 			time.Sleep(time.Second * 10)
 		}
 	}()
+
+	go func() {
+		for report := range app.GetReports() {
+			Publish("openmiio/report", report, false)
+		}
+	}()
 }
 
 type Handler func(topic string, payload []byte)
@@ -121,6 +127,8 @@ func worker() {
 	online = true
 
 	conn.Subscribe(tqs)
+
+	app.SendReport()
 
 	for m := range conn.Incoming {
 		log.Trace().Msgf("[mqtt] %s %s", m.TopicName, m.Payload)

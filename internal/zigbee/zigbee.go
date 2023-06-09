@@ -71,6 +71,16 @@ func Init() {
 			go tcpWorker(tcp, "/dev/ttyS1", true)
 		}
 	}
+
+	app.AddReport("zigbee", &report)
+}
+
+var report struct {
+	TcpRemote string      `json:"tcp_remote,omitempty"`
+	TcpStarts int         `json:"tcp_starts,omitempty"`
+	TcpUptime *app.Uptime `json:"tcp_uptime,omitempty"`
+	Z3Starts  int         `json:"z3_starts,omitempty"`
+	Z3Uptime  *app.Uptime `json:"z3_uptime,omitempty"`
 }
 
 var log zerolog.Logger
@@ -101,6 +111,10 @@ func z3Worker(name string, arg ...string) {
 			log.Panic().Err(err).Caller().Send()
 		}
 
+		report.Z3Starts++
+		report.Z3Uptime = app.NewUptime()
+		app.SendReport()
+
 		r := bufio.NewReader(pipe)
 		for {
 			var line []byte
@@ -115,6 +129,9 @@ func z3Worker(name string, arg ...string) {
 		}
 
 		_ = z3.Wait()
+
+		report.Z3Uptime = nil
+		app.SendReport()
 	}
 
 	log.Debug().Msgf("[zigb] close %s", name)
@@ -132,7 +149,12 @@ func tcpWorker(addr, port string, hardware bool) {
 			log.Panic().Err(err).Caller().Send()
 		}
 
-		log.Debug().Stringer("addr", tcp.RemoteAddr()).Msg("[zigb] new connection")
+		report.TcpRemote = tcp.RemoteAddr().String()
+		report.TcpStarts++
+		report.TcpUptime = app.NewUptime()
+		app.SendReport()
+
+		log.Debug().Str("addr", report.TcpRemote).Msg("[zigb] new connection")
 
 		if killZ3 != nil {
 			killZ3()
@@ -163,6 +185,7 @@ func tcpWorker(addr, port string, hardware bool) {
 				}
 
 				log.Trace().Msgf("[zigb] recv %x", b2[:n2])
+
 				if _, err2 = tcp.Write(b2[:n2]); err2 != nil {
 					log.Debug().Err(err2).Caller().Send()
 					break
@@ -179,7 +202,9 @@ func tcpWorker(addr, port string, hardware bool) {
 				log.Debug().Err(err1).Caller().Send()
 				break
 			}
+
 			log.Trace().Msgf("[zigb] send %x", b1[:n1])
+
 			if _, err1 = ser.Write(b1[:n1]); err1 != nil {
 				log.Debug().Err(err1).Caller().Send()
 				break
@@ -191,6 +216,10 @@ func tcpWorker(addr, port string, hardware bool) {
 
 		// wait until serial port will stop reading in separate gorutine
 		wg.Wait()
+
+		report.TcpRemote = ""
+		report.TcpUptime = nil
+		app.SendReport()
 
 		log.Debug().Stringer("addr", tcp.RemoteAddr()).Msg("[zigb] close connection")
 	}
