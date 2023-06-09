@@ -31,16 +31,12 @@ func Init() {
 	log = GetLogger("level")
 
 	// get device model and firmware version
-	b, err := os.ReadFile("/etc/build.prop")
-	if err == nil {
-		Firmware = getKey(b, "ro.sys.mi_fw_ver=")
+	if b, err := os.ReadFile("/etc/build.prop"); err == nil {
+		Firmware = getKey(b, "ro.sys.mi_fw_ver=") + "_" + getKey(b, "ro.sys.mi_build_num=")
 		Model = getKey(b, "ro.sys.model=")
-	} else {
-		b, err = os.ReadFile("/etc/rootfs_fw_info")
-		if err == nil {
-			Firmware = getKey(b, "version=")
-			Model = ModelMGW
-		}
+	} else if b, err = os.ReadFile("/etc/rootfs_fw_info"); err == nil {
+		Firmware = getKey(b, "version=")
+		Model = ModelMGW
 	}
 
 	log.Info().Msgf("openmiio_agent version %s %s/%s", Version, runtime.GOOS, runtime.GOARCH)
