@@ -151,21 +151,21 @@ func Subscribe(handler Handler, topics ...string) {
 	}
 }
 
-func Publish(topic string, data interface{}, retain bool) {
+func Publish(topic string, payload any, retain bool) {
 	if !online {
 		return
 	}
 
-	var payload []byte
+	var b []byte
 
-	switch data.(type) {
+	switch payload.(type) {
 	case []byte:
-		payload = data.([]byte)
+		b = payload.([]byte)
 	case string:
-		payload = []byte(data.(string))
+		b = []byte(payload.(string))
 	default:
 		var err error
-		if payload, err = json.Marshal(data); err != nil {
+		if b, err = json.Marshal(payload); err != nil {
 			log.Warn().Err(err).Caller().Send()
 			return
 		}
@@ -174,7 +174,7 @@ func Publish(topic string, data interface{}, retain bool) {
 	msg := &proto.Publish{
 		Header:    proto.Header{Retain: retain},
 		TopicName: topic,
-		Payload:   proto.BytesPayload(payload),
+		Payload:   proto.BytesPayload(b),
 	}
 	conn.Publish(msg)
 }
