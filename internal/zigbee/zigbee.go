@@ -1,14 +1,14 @@
 package zigbee
 
 import (
-	"bufio"
 	"bytes"
+	"errors"
 	"github.com/AlexxIT/openmiio_agent/internal/app"
-	"github.com/AlexxIT/openmiio_agent/internal/mqtt"
 	"github.com/AlexxIT/openmiio_agent/pkg/serial"
 	"github.com/rs/zerolog"
 	"io"
 	"net"
+	"os"
 	"os/exec"
 	"strconv"
 	"sync"
@@ -85,57 +85,6 @@ var report struct {
 
 var log zerolog.Logger
 var baudRate uint32
-var killZ3 func()
-
-func z3Worker(name string, arg ...string) {
-	runZ3 := true
-	for runZ3 {
-		log.Debug().Msgf("[zigb] run %s", name)
-
-		z3 := exec.Command(name, arg...)
-
-		killZ3 = func() {
-			killZ3 = nil
-			if err := z3.Process.Kill(); err != nil {
-				log.Warn().Err(err).Caller().Send()
-			}
-			runZ3 = false
-		}
-
-		pipe, err := z3.StdoutPipe()
-		if err != nil {
-			log.Panic().Err(err).Caller().Send()
-		}
-
-		if err = z3.Start(); err != nil {
-			log.Panic().Err(err).Caller().Send()
-		}
-
-		report.Z3Starts++
-		report.Z3Uptime = app.NewUptime()
-		app.SendReport()
-
-		r := bufio.NewReader(pipe)
-		for {
-			var line []byte
-			line, _, err = r.ReadLine()
-			if err != nil {
-				break
-			}
-
-			log.Trace().Msgf("[zigb] %s", line)
-
-			mqtt.Publish("log/z3", line, false)
-		}
-
-		_ = z3.Wait()
-
-		report.Z3Uptime = nil
-		app.SendReport()
-	}
-
-	log.Debug().Msgf("[zigb] close %s", name)
-}
 
 func tcpWorker(addr, port string, hardware bool) {
 	ln, err := net.Listen("tcp", ":"+addr)
@@ -151,24 +100,19 @@ func tcpWorker(addr, port string, hardware bool) {
 			log.Fatal().Err(err).Caller().Send()
 		}
 
+		z3kill()
+
 		report.TcpRemote = tcp.RemoteAddr().String()
 		report.TcpStarts++
 		report.TcpUptime = app.NewUptime()
-		app.SendReport()
 
-		log.Debug().Str("addr", report.TcpRemote).Msg("[zigb] new connection")
-
-		if killZ3 != nil {
-			killZ3()
-		}
+		log.Info().Str("remote", report.TcpRemote).Msg("[zigb] accept conn")
 
 		ser, err := open(port, hardware)
 		if err != nil {
-			log.Warn().Err(err).Caller().Send()
-
 			_ = tcp.Close()
 
-			continue
+			log.Fatal().Err(err).Str("port", port).Msg("[zigb] can't open serial")
 		}
 
 		var wg sync.WaitGroup
@@ -219,37 +163,53 @@ func tcpWorker(addr, port string, hardware bool) {
 		// wait until serial port will stop reading in separate gorutine
 		wg.Wait()
 
+		log.Info().Str("remote", report.TcpRemote).Msg("[zigb] close conn")
+
 		report.TcpRemote = ""
 		report.TcpUptime = nil
-		app.SendReport()
-
-		log.Debug().Stringer("addr", tcp.RemoteAddr()).Msg("[zigb] close connection")
 	}
 }
 
 func open(port string, hardware bool) (io.ReadWriteCloser, error) {
-	// custom zigbee firmware for Multimode Gateway work on 38400 speed
+	// check if zigbee chip answer on reset command
 	if baudRate == 0 {
-		if probe(port, 115200, hardware) {
-			baudRate = 115200
-		} else if probe(port, 38400, hardware) {
-			baudRate = 38400
-		} else {
-			baudRate = 115200
-			log.Warn().Msg("[zigb] fallback to default baud rate")
-			//return nil, errors.New("unknown baud rate")
+		// Z3 app can accidentally disable the zigbee chip during reset process
+		if err := zigbeeResetON(); err != nil {
+			return nil, err
 		}
+
+		baudRate = 115200
+
+		b, err := probe(port, hardware)
+		if err != nil {
+			log.Info().Err(err).Uint32("baud_rate", baudRate).Hex("read", b).Msg("[zigb] probe fail")
+
+			if app.Model != app.ModelMGW {
+				return nil, err
+			}
+
+			baudRate = 38400
+
+			// custom zigbee firmware for Multimode Gateway work on 38400 speed
+			b, err = probe(port, hardware)
+			if err != nil {
+				log.Info().Err(err).Uint32("baud_rate", baudRate).Hex("read", b).Msg("[zigb] probe fail")
+				return nil, err
+			}
+		}
+
+		log.Info().Uint32("baud_rate", baudRate).Hex("read", b).Msg("[zigb] probe OK")
 	}
 
 	return serial.Open(port, baudRate, hardware)
 }
 
-func probe(port string, baudRate uint32, hardware bool) bool {
-	log.Trace().Msgf("[zigb] probe %s baud=%d hw=%t", port, baudRate, hardware)
+func probe(port string, hardware bool) ([]byte, error) {
+	log.Debug().Str("port", port).Uint32("baud_rate", baudRate).Msg("[zigb] probe")
 
 	conn, err := serial.Open(port, baudRate, hardware)
 	if err != nil {
-		return false
+		return nil, err
 	}
 
 	defer func() {
@@ -261,34 +221,54 @@ func probe(port string, baudRate uint32, hardware bool) bool {
 	// reset cmd
 	// https://www.silabs.com/documents/public/user-guides/ug101-uart-gateway-protocol-reference.pdf
 	if _, err = conn.Write([]byte{0x1A, 0xC0, 0x38, 0xBC, 0x7E}); err != nil {
-		return false
+		return nil, err
 	}
 
 	// important to use 2 second timeout on serial port, because chip reset takes 1 second
-	b := make([]byte, 8)
-	for n := 0; n < 8; {
-		n1, err1 := conn.Read(b[n:])
-		if err1 != nil {
-			log.Debug().Err(err1).Caller().Send()
-			return false
+	b := make([]byte, 32)
+	for size := 0; size < len(b); {
+		n, err := conn.Read(b[size:])
+		if err != nil {
+			return b[:size], err
 		}
 
-		log.Trace().Msgf("[zigb] probe %x", b[n:n+n1])
+		log.Debug().Hex("read", b[size:size+n]).Msg("[zigb] probe")
 
-		if n1 == 0 {
-			return false
+		if n == 0 {
+			return b[:size], err
 		}
 
-		n += n1
+		size += n
 
 		// right answer:  1a c1 02 0b 0a 52 7e
 		// but sometimes: 11 1a c1 02 0b 0a 52 7e
-		if bytes.Contains(b, []byte{0xC1, 0x02, 0x0B, 0x0A, 0x52}) {
-			return true
+		if bytes.Contains(b, []byte{0x1A, 0xC1, 0x02, 0x0B, 0x0A, 0x52, 0x7E}) {
+			return b[:size], nil
 		}
 	}
 
-	return false
+	return b, errors.New("wrong response")
+}
+
+func zigbeeResetON() error {
+	switch app.Model {
+	case app.ModelMGW:
+		// /bin/zigbee_inter_bootloader.sh 1
+		// usleep(10000)
+		// /bin/zigbee_reset.sh 0
+		// usleep(10000)
+		// /bin/zigbee_reset.sh 1
+		return os.WriteFile("/sys/class/gpio/gpio18/value", []byte{'1'}, 0644)
+	case app.ModelE1, app.ModelMGW2:
+		// /bin/zigbee_isp.sh 1
+		// usleep(10000)
+		// /bin/zigbee_reset.sh 1
+		// usleep(10000)
+		// /bin/zigbee_reset.sh 0
+		return os.WriteFile("/sys/class/gpio/gpio44/value", []byte{'0'}, 0644)
+	}
+
+	return nil
 }
 
 // Hacky way of preventing program restarts:

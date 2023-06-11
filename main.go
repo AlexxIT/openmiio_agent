@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/AlexxIT/openmiio_agent/internal/app"
 	"github.com/AlexxIT/openmiio_agent/internal/cache"
 	"github.com/AlexxIT/openmiio_agent/internal/central"
@@ -10,10 +9,10 @@ import (
 	"github.com/AlexxIT/openmiio_agent/internal/mqtt"
 	"github.com/AlexxIT/openmiio_agent/internal/store"
 	"github.com/AlexxIT/openmiio_agent/internal/zigbee"
+	"github.com/rs/zerolog/log"
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 )
 
 func main() {
@@ -30,10 +29,5 @@ func main() {
 
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-	log("exit with signal: %s\n", <-sigs)
-}
-
-func log(format string, a ...any) {
-	fmt.Print(time.Now().Format(time.RFC3339), " ")
-	fmt.Printf(format, a...)
+	log.Log().Stringer("signal", <-sigs).Msg("exit")
 }

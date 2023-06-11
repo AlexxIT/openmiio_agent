@@ -27,17 +27,13 @@ func Init() {
 		Subscribe(nil, v)
 	}
 
+	app.Publish = Publish
+
 	go func() {
 		for {
 			worker()
 
 			time.Sleep(time.Second * 10)
-		}
-	}()
-
-	go func() {
-		for report := range app.GetReports() {
-			Publish("openmiio/report", report, false)
 		}
 	}()
 }

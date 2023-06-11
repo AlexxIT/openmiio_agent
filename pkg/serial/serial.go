@@ -26,7 +26,7 @@ func Open(port string, baudRate uint32, hardware bool) (*Serial, error) {
 	}
 
 	// Block reads until at least one char is available (no timeout)
-	term.Cc[unix.VTIME] = 20    // 2 sec
+	term.Cc[unix.VTIME] = 30    // 3 sec
 	term.Cc[unix.VMIN] = 0      // 0 byte
 	term.Cc[unix.VSTART] = 0x11 // XON
 	term.Cc[unix.VSTOP] = 0x13  // XOFF

@@ -2,40 +2,43 @@ package app
 
 import (
 	"fmt"
+	"github.com/rs/zerolog"
+	"io"
 	"time"
 )
 
-var reports = map[string]any{}
-var reportChan chan map[string]any
-var reportTimer *time.Timer
-
-func AddReport(name string, value any) {
-	reports[name] = value
-}
-
-func GetReports() chan map[string]any {
-	if reportChan != nil {
-		log.Panic().Msg("multiple reports init")
+func multiLogger(w io.Writer) io.Writer {
+	if !Enabled("mqtt") {
+		return w
 	}
 
-	reportChan = make(chan map[string]any)
-	reportTimer = time.NewTimer(30 * time.Second)
+	reportTicker = time.NewTicker(30 * time.Second)
 
 	go func() {
-		for range reportTimer.C {
-			reportChan <- reports
-			reportTimer.Reset(30 * time.Second)
+		for range reportTicker.C {
+			Publish("openmiio/report", report, false)
 		}
 	}()
 
-	return reportChan
+	return zerolog.MultiLevelWriter(w, mqttLogger{topic: "openmiio/log"})
+}
+
+var report = make(map[string]any, 9)
+var reportTicker *time.Ticker
+
+// Publish will be overwriten from MQTT module
+var Publish = func(topic string, payload any, retain bool) {}
+
+func AddReport(name string, value any) {
+	report[name] = value
 }
 
 func SendReport() {
-	if reportTimer == nil {
+	if reportTicker == nil {
 		return
 	}
-	reportTimer.Reset(0)
+	reportTicker.Reset(30 * time.Second)
+	Publish("openmiio/report", report, false)
 }
 
 type Uptime struct {
@@ -49,4 +52,32 @@ func NewUptime() *Uptime {
 func (u *Uptime) MarshalJSON() ([]byte, error) {
 	s := time.Since(u.start).Round(time.Second).String()
 	return []byte(fmt.Sprintf(`"%s"`, s)), nil
+}
+
+type mqttLogger struct {
+	topic string
+}
+
+func (w mqttLogger) WriteLevel(level zerolog.Level, p []byte) (n int, err error) {
+	// it is important that `n` returns a length `p` or zerolor will print warning
+	if n = len(p); n == 0 {
+		return 0, nil
+	}
+
+	b := make([]byte, n-1) // remove tailing newline
+	copy(b, p)
+
+	Publish(w.topic, b, false)
+
+	// wait msg will be published before app exit
+	if level >= zerolog.FatalLevel {
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	return
+}
+
+func (w mqttLogger) Write(p []byte) (n int, err error) {
+	// this function will never be called
+	panic("not implemented")
 }

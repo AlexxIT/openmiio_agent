@@ -3,6 +3,8 @@ package app
 import (
 	"bytes"
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+	"io"
 	"os"
 	"runtime"
 	"strings"
@@ -23,12 +25,17 @@ func Init() {
 	// init logs
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnixMs
 
-	writer := zerolog.ConsoleWriter{
+	var writer io.Writer = zerolog.ConsoleWriter{
 		Out: os.Stdout, TimeFormat: "15:04:05.000", NoColor: true,
 	}
 
-	log = zerolog.New(writer).With().Timestamp().Logger().Level(zerolog.WarnLevel)
-	log = GetLogger("level")
+	writer = multiLogger(writer)
+
+	// overwrite default zerolog logger with default info level
+	log.Logger = zerolog.New(writer).With().Timestamp().Logger().Level(zerolog.InfoLevel)
+
+	// get main log level from app args
+	log.Logger = GetLogger("level")
 
 	// get device model and firmware version
 	if b, err := os.ReadFile("/etc/build.prop"); err == nil {
@@ -60,7 +67,7 @@ func GetLogger(name string) zerolog.Logger {
 			return log.Level(lvl)
 		}
 	}
-	return log
+	return log.Logger
 }
 
 func Enabled(name string) bool {
@@ -78,8 +85,6 @@ const (
 var Firmware string
 var Model string
 var Args = map[string]string{}
-
-var log zerolog.Logger
 
 func getKey(b []byte, sub string) string {
 	if i := bytes.Index(b, []byte(sub)); i > 0 {
