@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-var Version = "1.1.1"
+var Version = "1.2.0"
 
 func Init() {
 	// init command arguments
