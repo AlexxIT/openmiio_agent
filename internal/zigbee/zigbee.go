@@ -140,13 +140,13 @@ func z3Worker(name string, arg ...string) {
 func tcpWorker(addr, port string, hardware bool) {
 	ln, err := net.Listen("tcp", ":"+addr)
 	if err != nil {
-		log.Panic().Err(err).Caller().Send()
+		log.Fatal().Err(err).Caller().Send()
 	}
 
 	for {
 		tcp, err := ln.Accept()
 		if err != nil {
-			log.Panic().Err(err).Caller().Send()
+			log.Fatal().Err(err).Caller().Send()
 		}
 
 		report.TcpRemote = tcp.RemoteAddr().String()
@@ -298,6 +298,6 @@ func preventRestart(app string) {
 	cmd := exec.Command("tail", app, "-f", "/dev/null")
 	cmd.SysProcAttr = &syscall.SysProcAttr{Pdeathsig: syscall.SIGTERM}
 	if err := cmd.Start(); err != nil {
-		log.Panic().Err(err).Caller().Send()
+		log.Fatal().Err(err).Caller().Send()
 	}
 }

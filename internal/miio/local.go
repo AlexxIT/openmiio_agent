@@ -18,7 +18,7 @@ func localWorker() {
 
 	sock, err := net.Listen("unixpacket", "/tmp/miio_agent.socket")
 	if err != nil {
-		log.Panic().Err(err).Caller().Send()
+		log.Fatal().Err(err).Caller().Send()
 	}
 
 	for {

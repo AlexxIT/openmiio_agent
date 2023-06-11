@@ -43,7 +43,7 @@ func Init() {
 	addr := &net.UnixAddr{Name: OriginalSocket, Net: "unixpacket"}
 	ln, err := net.ListenUnix(addr.Net, addr)
 	if err != nil {
-		log.Panic().Err(err).Caller().Send()
+		log.Fatal().Err(err).Caller().Send()
 	}
 
 	// force BT utility to reconnect to new socket
@@ -53,12 +53,12 @@ func Init() {
 		// very important to use AcceptUnix vs Accept, because ARM linux can't handle KILL signal
 		conn1, err := ln.AcceptUnix()
 		if err != nil {
-			log.Panic().Err(err).Caller().Send()
+			log.Fatal().Err(err).Caller().Send()
 		}
 
 		conn2, err := net.Dial("unixpacket", ProxySocket)
 		if err != nil {
-			log.Panic().Err(err).Caller().Send()
+			log.Fatal().Err(err).Caller().Send()
 		}
 
 		log.Debug().Msgf("[cent] new connection")
