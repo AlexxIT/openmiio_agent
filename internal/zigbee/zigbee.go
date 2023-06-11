@@ -224,8 +224,8 @@ func probe(port string, hardware bool) ([]byte, error) {
 		return nil, err
 	}
 
-	// important to use 2 second timeout on serial port, because chip reset takes 1 second
-	b := make([]byte, 32)
+	// important to use 3 second timeout on serial port, because chip reset takes 1 second
+	b := make([]byte, 64)
 	for size := 0; size < len(b); {
 		n, err := conn.Read(b[size:])
 		if err != nil {
@@ -235,7 +235,7 @@ func probe(port string, hardware bool) ([]byte, error) {
 		log.Debug().Hex("read", b[size:size+n]).Msg("[zigb] probe")
 
 		if n == 0 {
-			return b[:size], err
+			return b[:size], errors.New("wrong response")
 		}
 
 		size += n
