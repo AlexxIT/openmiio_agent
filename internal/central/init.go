@@ -40,7 +40,8 @@ func Init() {
 		_ = os.Remove(OriginalSocket)
 	}
 
-	sock, err := net.Listen("unixpacket", OriginalSocket)
+	addr := &net.UnixAddr{Name: OriginalSocket, Net: "unixpacket"}
+	ln, err := net.ListenUnix(addr.Net, addr)
 	if err != nil {
 		log.Panic().Err(err).Caller().Send()
 	}
@@ -49,7 +50,8 @@ func Init() {
 	_ = exec.Command("killall", "silabs_ncp_bt", "miio_bt").Run()
 
 	for {
-		conn1, err := sock.Accept()
+		// very important to use AcceptUnix vs Accept, because ARM linux can't handle KILL signal
+		conn1, err := ln.AcceptUnix()
 		if err != nil {
 			log.Panic().Err(err).Caller().Send()
 		}
