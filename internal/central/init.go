@@ -26,18 +26,21 @@ func Init() {
 		return
 	}
 
-	// move old socket to new socket place
-	if _, err := os.Stat(ProxySocket); errors.Is(err, os.ErrNotExist) {
-		log.Info().Str("socket", ProxySocket).Msg("[cent] create")
+	if socketActive(OriginalSocket) {
+		log.Info().Msg("[cent] using original socket")
 
-		if err = os.Rename(OriginalSocket, ProxySocket); err != nil {
-			log.Error().Err(err).Caller().Send()
+		// move original socket to proxy socket place
+		if err := os.Rename(OriginalSocket, ProxySocket); err != nil {
+			log.Panic().Err(err).Caller().Send()
 			return
 		}
-	} else {
-		log.Info().Str("socket", OriginalSocket).Msgf("[cent] use old")
+	} else if socketActive(ProxySocket) {
+		log.Info().Msgf("[cent] using proxy socket")
 
 		_ = os.Remove(OriginalSocket)
+	} else {
+		log.Warn().Msg("[cent] can't open socket")
+		return
 	}
 
 	addr := &net.UnixAddr{Name: OriginalSocket, Net: "unixpacket"}
@@ -66,6 +69,15 @@ func Init() {
 		go proxy(conn1, conn2, true)
 		go proxy(conn2, conn1, false)
 	}
+}
+
+func socketActive(name string) bool {
+	conn, err := net.Dial("unixpacket", name)
+	if err != nil {
+		return false
+	}
+	_ = conn.Close()
+	return true
 }
 
 func proxy(conn1, conn2 net.Conn, request bool) {
