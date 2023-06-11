@@ -58,15 +58,16 @@ func z3Worker(name string, arg ...string) {
 
 		r := bufio.NewReader(pipe)
 		for {
-			var line []byte
-			line, _, err = r.ReadLine()
+			line, _, err := r.ReadLine()
 			if err != nil {
 				break
 			}
 
 			log.Trace().Msgf("[zigb] %s", line)
 
-			mqtt.Publish("log/z3", line, false)
+			if len(line) > 0 {
+				mqtt.Publish("log/z3", line, false)
+			}
 		}
 
 		_ = z3cmd.Wait()
