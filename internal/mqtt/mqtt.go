@@ -67,7 +67,7 @@ func runPublic() {
 		cmd = "killall mosquitto; sleep .5; /tmp/mosquitto -d; sleep .5"
 	}
 
-	log.Info().Msg("[mqtt] run mosquitto on :1883")
+	log.Info().Msg("[mqtt] run mosquitto on 0.0.0.0:1883")
 
 	if err := exec.Command("sh", "-c", cmd).Run(); err != nil {
 		log.Warn().Err(err).Caller().Send()
