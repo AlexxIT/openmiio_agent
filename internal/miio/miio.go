@@ -5,19 +5,44 @@ import (
 	"github.com/AlexxIT/openmiio_agent/internal/mqtt"
 	"github.com/AlexxIT/openmiio_agent/pkg/rpc"
 	"github.com/rs/zerolog"
+	"strconv"
 )
 
 const (
-	AddrBasis      = int(1)   // basic_gw
+	AddrHardware   = int(1)   // basic_gw
 	AddrBluetooth  = int(2)   // silabs_ncp_bt
 	AddrZigbee     = int(4)   // zigbee_gw
 	AddrHomeKit    = int(8)   // homekitserver
 	AddrAutomation = int(16)  // mijia_automation
-	AddrMaster     = int(32)  // basic_app
+	AddrGateway    = int(32)  // basic_app
 	AddrCentral    = int(128) // central_service_lite
 	AddrCloud      = int(0)   // miio_client
 	AddrMQQT       = int(-1)  // mosquitto
 )
+
+func appname(addr int) string {
+	switch addr {
+	case AddrHardware:
+		return "hardware"
+	case AddrBluetooth:
+		return "bluetooth"
+	case AddrZigbee:
+		return "zigbee"
+	case AddrHomeKit:
+		return "homekit"
+	case AddrAutomation:
+		return "automation"
+	case AddrGateway:
+		return "gateway"
+	case AddrCentral:
+		return "central"
+	case AddrCloud:
+		return "cloud"
+	case AddrMQQT:
+		return "mqtt"
+	}
+	return strconv.Itoa(addr)
+}
 
 func Init() {
 	if !app.Enabled("miio") {

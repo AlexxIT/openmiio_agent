@@ -28,14 +28,14 @@ func Init() {
 
 	// move old socket to new socket place
 	if _, err := os.Stat(ProxySocket); errors.Is(err, os.ErrNotExist) {
-		log.Debug().Msgf("[cent] create proxy socket")
+		log.Info().Str("socket", ProxySocket).Msg("[cent] create")
 
 		if err = os.Rename(OriginalSocket, ProxySocket); err != nil {
 			log.Error().Err(err).Caller().Send()
 			return
 		}
 	} else {
-		log.Debug().Msgf("[cent] use old proxy socket")
+		log.Info().Str("socket", OriginalSocket).Msgf("[cent] use old")
 
 		_ = os.Remove(OriginalSocket)
 	}
@@ -61,7 +61,7 @@ func Init() {
 			log.Fatal().Err(err).Caller().Send()
 		}
 
-		log.Debug().Msgf("[cent] new connection")
+		log.Info().Msg("[cent] accept conn")
 
 		go proxy(conn1, conn2, true)
 		go proxy(conn2, conn1, false)
@@ -94,7 +94,7 @@ func proxy(conn1, conn2 net.Conn, request bool) {
 		}
 	}
 
-	log.Debug().Msgf("[cent] close connection")
+	log.Info().Msgf("[cent] close conn")
 
 	_ = conn1.Close()
 	_ = conn2.Close()

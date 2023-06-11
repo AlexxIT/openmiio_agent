@@ -40,7 +40,6 @@ func Init() {
 	}
 
 	log.Info().Msgf("openmiio_agent version %s %s/%s", Version, runtime.GOOS, runtime.GOARCH)
-	log.Info().Msgf("init model=%s fw=%s", Model, Firmware)
 
 	AddReport("openmiio", map[string]any{
 		"version": Version,

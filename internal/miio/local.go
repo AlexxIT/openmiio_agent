@@ -52,7 +52,7 @@ func localClientWorker(conn net.Conn) {
 		if from == 0 {
 			if string(msg["method"]) == `"bind"` {
 				if from = msg.GetInt("address"); from > 0 {
-					log.Debug().Msgf("[miio] new client from=%d", from)
+					log.Info().Str("app", appname(from)).Msg("[miio] accept conn")
 
 					mu.Lock()
 					conns[from] = conn
@@ -77,7 +77,7 @@ func localClientWorker(conn net.Conn) {
 	}
 
 	if from > 0 {
-		log.Debug().Msgf("[miio] close client addr=%d", from)
+		log.Info().Str("app", appname(from)).Msg("[miio] close conn")
 
 		mu.Lock()
 		delete(conns, from)

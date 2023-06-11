@@ -143,6 +143,8 @@ func tcpWorker(addr, port string, hardware bool) {
 		log.Fatal().Err(err).Caller().Send()
 	}
 
+	log.Info().Str("port", addr).Msg("[zigb] listen TCP")
+
 	for {
 		tcp, err := ln.Accept()
 		if err != nil {

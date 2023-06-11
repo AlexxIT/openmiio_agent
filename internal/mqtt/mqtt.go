@@ -124,6 +124,8 @@ func worker() {
 		return
 	}
 
+	log.Info().Msg("[mqtt] online")
+
 	online = true
 
 	conn.Subscribe(tqs)
@@ -138,6 +140,8 @@ func worker() {
 			handler(m.TopicName, payload)
 		}
 	}
+
+	log.Info().Msg("[mqtt] offline")
 
 	online = false
 }
