@@ -57,6 +57,9 @@ func Init() {
 		}
 	}, "miio/command")
 
+	app.AddReport("miio", &report)
+	rpc.AddResponse(miioReport)
+
 	go rpc.MarksWorker()
 
 	go cloudWorker()
