@@ -58,7 +58,7 @@ func Init() {
 		"firmware": Firmware,
 	})
 
-	AddReport("serial", SerialStats{})
+	AddReport("serial", &SerialStats{})
 }
 
 func GetLogger(name string) zerolog.Logger {

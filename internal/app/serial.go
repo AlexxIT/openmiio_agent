@@ -7,10 +7,8 @@ import (
 	"strconv"
 )
 
-type SerialStats struct{}
-
-func (s SerialStats) MarshalJSON() ([]byte, error) {
-	var report struct {
+type SerialStats struct {
+	stat struct {
 		BluetoothRX uint32 `json:"bluetooth_rx,omitempty"`
 		BluetoothTX uint32 `json:"bluetooth_tx,omitempty"`
 		BluetoothOE uint32 `json:"bluetooth_oe,omitempty"`
@@ -18,43 +16,40 @@ func (s SerialStats) MarshalJSON() ([]byte, error) {
 		ZigbeeTX    uint32 `json:"zigbee_tx,omitempty"`
 		ZigbeeOE    uint32 `json:"zigbee_oe,omitempty"`
 	}
+}
 
+func (s *SerialStats) MarshalJSON() ([]byte, error) {
 	switch Model {
 	case ModelMGW:
 		counters := readSerial("/proc/tty/driver/serial")
-		if len(counters) < 9 {
-			return nil, nil
+		if len(counters) >= 9 {
+			s.stat.BluetoothTX = counters[3]
+			s.stat.BluetoothRX = counters[4]
+			s.stat.BluetoothOE = counters[5]
+			s.stat.ZigbeeTX = counters[6]
+			s.stat.ZigbeeRX = counters[7]
+			s.stat.ZigbeeOE = counters[8]
 		}
-		report.BluetoothTX = counters[3]
-		report.BluetoothRX = counters[4]
-		report.BluetoothOE = counters[5]
-		report.ZigbeeTX = counters[6]
-		report.ZigbeeRX = counters[7]
-		report.ZigbeeOE = counters[8]
 	case ModelE1:
 		counters := readSerial("/proc/tty/driver/ms_uart")
-		if len(counters) < 6 {
-			return nil, nil
+		if len(counters) >= 6 {
+			s.stat.ZigbeeTX = counters[3]
+			s.stat.ZigbeeRX = counters[4]
+			s.stat.ZigbeeOE = counters[5]
 		}
-		report.ZigbeeTX = counters[3]
-		report.ZigbeeRX = counters[4]
-		report.ZigbeeOE = counters[5]
 	case ModelMGW2:
 		counters := readSerial("/proc/tty/driver/ms_uart")
-		if len(counters) < 9 {
-			return nil, nil
+		if len(counters) >= 9 {
+			s.stat.BluetoothTX = counters[6]
+			s.stat.BluetoothRX = counters[7]
+			s.stat.BluetoothOE = counters[8]
+			s.stat.ZigbeeTX = counters[3]
+			s.stat.ZigbeeRX = counters[4]
+			s.stat.ZigbeeOE = counters[5]
 		}
-		report.BluetoothTX = counters[6]
-		report.BluetoothRX = counters[7]
-		report.BluetoothOE = counters[8]
-		report.ZigbeeTX = counters[3]
-		report.ZigbeeRX = counters[4]
-		report.ZigbeeOE = counters[5]
-	default:
-		return nil, nil
 	}
 
-	return json.Marshal(report)
+	return json.Marshal(s.stat)
 }
 
 func readSerial(name string) (counters []uint32) {
