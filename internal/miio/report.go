@@ -15,7 +15,7 @@ var report struct {
 var cloudState string
 
 func miioReport(to int, req rpc.Message, res *rpc.Message) bool {
-	if string(req["method"]) == `"local.query_status"` {
+	if string(req["method"]) == `"local.query_status"` || string(req["method"]) == `"lanbox.event"` {
 		if state := string((*res)["params"]); state != cloudState {
 			cloudState = state
 

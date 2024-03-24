@@ -1,6 +1,7 @@
 package miio
 
 import (
+	"github.com/AlexxIT/openmiio_agent/internal/app"
 	"bytes"
 	"net"
 	"time"
@@ -11,11 +12,19 @@ var conn0 net.Conn
 func cloudWorker() {
 	var err error
 	var n int
+	var connection string
 
 	sep := []byte(`}{`)
 
 	for {
-		conn0, err = net.Dial("tcp", "localhost:54322")
+		switch app.Model {
+		case app.ModelM2, app.ModelM1S, app.ModelM2PoE, app.ModelG3, app.ModelM3:
+			connection = "127.0.0.1:21397"
+		default:
+			connection = "localhost:54322"
+		}
+
+		conn0, err = net.Dial("tcp", connection)
 		if err != nil {
 			time.Sleep(time.Second * 10)
 			continue

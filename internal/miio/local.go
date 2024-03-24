@@ -1,20 +1,26 @@
 package miio
 
 import (
+	"github.com/AlexxIT/openmiio_agent/internal/app"
 	"github.com/AlexxIT/openmiio_agent/pkg/rpc"
 	"net"
 	"os"
 	"os/exec"
 	"sync"
 	"time"
+	"bytes"
 )
 
 func localWorker() {
 	_ = os.Remove("/tmp/miio_agent.socket")
-	_ = exec.Command("killall", "miio_agent").Run()
-
-	// fix basic_gw (Multimode Gateway) bug with instant reconnection
-	time.Sleep(time.Millisecond * 500)
+	switch app.Model {
+	case app.ModelM2, app.ModelM1S, app.ModelM2PoE, app.ModelG3, app.ModelM3:
+		_ = exec.Command("killall", "ha_agent").Run()
+	default:
+		_ = exec.Command("killall", "miio_agent").Run()
+		// fix basic_gw (Multimode Gateway) bug with instant reconnection
+		time.Sleep(time.Millisecond * 500)
+	}
 
 	sock, err := net.Listen("unixpacket", "/tmp/miio_agent.socket")
 	if err != nil {
@@ -35,6 +41,7 @@ func localWorker() {
 
 func localClientWorker(conn net.Conn) {
 	var from int
+	var len int
 
 	b := make([]byte, 4096)
 	for {
@@ -42,8 +49,14 @@ func localClientWorker(conn net.Conn) {
 		if err != nil {
 			break
 		}
-
-		msg, err := rpc.NewMessage(b[:n])
+	
+		index := bytes.IndexByte(b, 0)
+		if (index > n) {
+		  len = n
+		} else {
+		  len = index
+		}
+		msg, err := rpc.NewMessage(b[:len])
 		if err != nil {
 			log.Warn().Err(err).Caller().Send()
 			continue

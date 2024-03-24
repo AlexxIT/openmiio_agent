@@ -18,6 +18,10 @@ const (
 	AddrCentral    = int(128) // central_service_lite
 	AddrCloud      = int(0)   // miio_client
 	AddrMQQT       = int(-1)  // mosquitto
+	AddrAiotAuto   = int(256)
+	AddrRecorder   = int(1024)
+	AddrAiotEvent  = int(262144)
+	AddrAiotLan    = int(524288)
 )
 
 func appname(addr int) string {
@@ -40,6 +44,14 @@ func appname(addr int) string {
 		return "cloud"
 	case AddrMQQT:
 		return "mqtt"
+	case AddrAiotAuto:
+		return "aiot_automation"
+	case AddrRecorder:
+		return "recorder"
+	case AddrAiotEvent:
+		return "aiot_event"
+	case AddrAiotLan:
+		return "aiot_lanbox"
 	}
 	return strconv.Itoa(addr)
 }
@@ -62,7 +74,9 @@ func Init() {
 
 	go rpc.MarksWorker()
 
-	go cloudWorker()
+	if app.Model != app.ModelM3 {
+		go cloudWorker()
+	}
 	go localWorker()
 }
 
@@ -110,6 +124,10 @@ func miioRequest(from int, msg rpc.Message) {
 			mqtt.Publish("miio/report_ack", msg, false)
 		}
 
+		if from == AddrCloud && to0 > 0 && !hasPrefix(msg0["method"], `"basis.`) {
+			mqtt.Publish("miio/report_ack", msg, false)
+		}
+
 		miioResponse(to0, msg0, msg)
 		return
 	} else {
@@ -119,6 +137,9 @@ func miioRequest(from int, msg rpc.Message) {
 		log.Trace().Msgf("[miio] %s req from=%d to=0", msg, from)
 
 		if from > 0 && !hasPrefix(msg["method"], `"local.`) {
+			mqtt.Publish("miio/report", msg, false)
+		}
+		if from > 0 && !hasPrefix(msg["method"], `"basis.`) {
 			mqtt.Publish("miio/report", msg, false)
 		}
 	}

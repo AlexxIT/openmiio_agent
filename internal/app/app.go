@@ -39,8 +39,17 @@ func Init() {
 
 	// get device model and firmware version
 	if b, err := os.ReadFile("/etc/build.prop"); err == nil {
-		Firmware = getKey(b, "ro.sys.mi_fw_ver=") + "_" + getKey(b, "ro.sys.mi_build_num=")
 		Model = getKey(b, "ro.sys.model=")
+		switch Model {
+			case ModelM2, ModelM1S, ModelM1S22, ModelM2PoE, ModelG3, ModelM3:
+				{
+					Firmware = getKey(b, "ro.sys.fw_ver=") + "_" + getKey(b, "ro.sys.build_num=")
+				}
+			default:
+				{
+					Firmware = getKey(b, "ro.sys.mi_fw_ver=") + "_" + getKey(b, "ro.sys.mi_build_num=")
+				}
+		}
 	} else if b, err = os.ReadFile("/etc/rootfs_fw_info"); err == nil {
 		Firmware = getKey(b, "version=")
 		Model = ModelMGW
@@ -79,7 +88,12 @@ const (
 	ModelMGW   = "lumi.gateway.mgl03"
 	ModelE1    = "lumi.gateway.aqcn02"
 	ModelMGW2  = "lumi.gateway.mcn001"
+	ModelM1S   = "lumi.gateway.acn01"
 	ModelM1S22 = "lumi.gateway.acn004"
+	ModelM2    = "lumi.gateway.iragl5"
+	ModelG3    = "lumi.camera.gwpagl01"
+	ModelM2PoE = "lumi.gateway.iragl8"
+	ModelM3    = "lumi.gateway.acn012"
 )
 
 var Firmware string
