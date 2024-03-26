@@ -47,6 +47,20 @@ func (s *SerialStats) MarshalJSON() ([]byte, error) {
 			s.stat.ZigbeeRX = counters[4]
 			s.stat.ZigbeeOE = counters[5]
 		}
+	case ModelM2, ModelM1S:
+		counters := readSerial("/proc/tty/driver/serial")
+		if len(counters) >= 6 {
+			s.stat.ZigbeeTX = counters[3]
+			s.stat.ZigbeeRX = counters[4]
+			s.stat.ZigbeeOE = counters[5]
+		}
+	case ModelG3, ModelM2PoE, ModelM3:
+		counters := readSerial("/proc/tty/driver/ms_uart")
+		if len(counters) >= 6 {
+			s.stat.ZigbeeTX = counters[3]
+			s.stat.ZigbeeRX = counters[4]
+			s.stat.ZigbeeOE = counters[5]
+		}
 	}
 
 	return json.Marshal(s.stat)

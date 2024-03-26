@@ -41,6 +41,9 @@ func Init() {
 	case app.ModelM1S22:
 		log.Warn().Msgf("[zigb] M1S 2022 unsupported")
 		return
+	case app.ModelM2, app.ModelM1S, app.ModelM2PoE, app.ModelG3, app.ModelM3:
+		preventRestart("Z3GatewayHost_MQTT")
+		_ = exec.Command("killall", "Z3GatewayHost_MQTT").Run()
 	default:
 		return
 	}
@@ -55,6 +58,11 @@ func Init() {
 			go z3Worker("mZ3GatewayHost_MQTT", "-p", "/dev/ttyS1", "-d", "/data/")
 		case app.ModelMGW2:
 			go z3Worker("mZ3GatewayHost_MQTT", "-p", "/dev/ttyS1", "-d", "/data/zigbee_host/", "-r", "c")
+		case app.ModelM2PoE, app.ModelG3, app.ModelM3:
+			go z3Worker("Z3GatewayHost_MQTT", "-p", "/dev/ttyS1", "-d", "/data/", "-r", "c")
+		case app.ModelM2, app.ModelM1S:
+			log.Warn().Msgf("[zigb] M2 M1S unsupported")
+			return
 		}
 	}
 
@@ -67,7 +75,7 @@ func Init() {
 		switch app.Model {
 		case app.ModelMGW:
 			go tcpWorker(tcp, "/dev/ttyS2", false)
-		case app.ModelE1, app.ModelMGW2:
+		case app.ModelE1, app.ModelMGW2, app.ModelM2PoE, app.ModelG3, app.ModelM3:
 			go tcpWorker(tcp, "/dev/ttyS1", true)
 		}
 	}
